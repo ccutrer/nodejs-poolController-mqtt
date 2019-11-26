@@ -38,8 +38,7 @@ module.exports = function(container) {
 
     //setup mqtt
 	var mqtt = require('mqtt')
-	// *****IMPORTANT: Change the following line to connect to your mqtt broker ip address
-    var client = mqtt.connect('http://192.168.1.179:1883')
+    var client = mqtt.connect(configFile.outputSocketToMQTT.mqttUrl)
 
   //setup jsonata
    	var jsonata = require("jsonata") 

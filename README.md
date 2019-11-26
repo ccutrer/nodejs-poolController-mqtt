@@ -50,16 +50,15 @@ This allows easy integration with other home automation softwares such as [node-
         "outputSocketToMQTT": 1
     },
 "outputSocketToMQTT": {
-        "level": "debug"
+        "level": "debug",
+        "mqttUrl": "http://192.168.1.179:1883"
     },
 
 Precaution:  make a backup copy of your config.json or customized configuration file.  
 
-#3.  Modify outputSocketToMQTT.js line 42 to specify the IP address of YOUR MQTT server on your network.
+#5.  Add the outputSocketToMQTT.js file to the nodejs-poolController/src/inegrations folder on your raspberry pi
 
-#4.  Add the outputSocketToMQTT.js file to the nodejs-poolController/src/inegrations folder on your rapsberry pi
-
-#5.  Run npm install in the nodejs-poolController folder where package.json exists
+#6.  Run npm install in the nodejs-poolController folder where package.json exists
 
 ## Requirements
 
