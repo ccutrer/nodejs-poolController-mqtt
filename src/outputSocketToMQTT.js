@@ -88,11 +88,14 @@ module.exports = function(container) {
 //This is a listener for the temperature event.  data is what is received.
     socket.on('temperature', function(data) {
       	console.log('outputSocketToMQTT: Temperature info as follows: %s', JSON.stringify(data))
+				var airTemp = jsonata("temperature.airTemp").evaluate(data)
+				var poolTemp = jsonata("temperature.poolTemp").evaluate(data)
   				var poolHeatMode = jsonata("temperature.poolHeatMode").evaluate(data)
-				var poolSetpoint = jsonata("temperature.poolSetPoint").evaluate(data)			
+				var poolSetpoint = jsonata("temperature.poolSetPoint").evaluate(data)
+				var spaTemp = jsonata("temperature.spaTemp").evaluate(data)
   				var spaHeatMode = jsonata("temperature.spaHeatMode").evaluate(data)
   				var spaSetpoint = jsonata("temperature.spaSetPoint").evaluate(data)
-  				sendMqttHeatStatus(poolHeatMode,poolSetpoint,spaHeatMode,spaSetpoint)
+  				sendMqttHeatStatus(airTemp,poolHeatMode,poolTemp,poolSetpoint,spaHeatMode,spaTemp,spaSetpoint)
 	})
 
     //The 'error' function fires if there is an error connecting to the socket
@@ -113,22 +116,18 @@ module.exports = function(container) {
  	} 
 
 //Function to send circuit status update via mqtt
-	function sendMqttHeatStatus(poolHeatMode, poolSetpoint, spaHeatMode, spaSetpoint) {
+	function sendMqttHeatStatus(airTemp, poolHeatMode, poolTemp, poolSetpoint, spaHeatMode, spaTemp, spaSetpoint) {
 		console.log(`Pool Heat status is ${poolHeatMode}`)
 		console.log(`Spa Heat status is ${spaHeatMode}`)
-		var pool_str = "pool/poolheat/mode/status"
-		var spa_str = "pool/spaheat/mode/status"
-    	var pool_setpoint_str = "pool/poolheat/setpoint"		
-		var spa_setpoint_str = "pool/spaheat/setpoint"
-		var pool_status_str = String(poolHeatMode)
-		var spa_status_str = String(spaHeatMode)
-		var pool_setpoint = String(poolSetpoint)
-		var spa_setpoint = String(spaSetpoint)	
-		client.publish(pool_str,pool_status_str)
-		client.publish(spa_str,spa_status_str)
-		client.publish(pool_setpoint_str, pool_setpoint)
-		client.publish(spa_setpoint_str,spa_setpoint)
- 	} 
+
+		client.publish("pool/air/temp", String(airTemp))
+		client.publish("pool/poolheat/mode/status", String(poolHeatMode))
+		client.publish("pool/poolheat/temp", String(poolTemp))
+		client.publish("pool/poolheat/setpoint", String(poolSetpoint))
+		client.publish("pool/spaheat/mode/status", String(spaHeatMode))
+		client.publish("pool/spaheat/temp", String(spaTemp))
+		client.publish("pool/spaheat/setpoint", String(spaSetpoint))
+ 	}
 
     //This init can be this simple.  It just lets us know the integration is running
     function init() {
