@@ -40,6 +40,7 @@ module.exports = function(container) {
     var mqtt = require('mqtt')
     var gotCircuits = false
     var gotTemp = false
+    var gotChlorinator = false
     var ready = false
 
     var mqttPrefix = configFile.mqttHomie.mqttPrefix
@@ -60,11 +61,11 @@ module.exports = function(container) {
         }
     }
 
+    var nodes = 'air,pool,spa,heater'
     client.on('connect', ()=> {
         console.log(`mqttHomie: publishing ${mqttPrefix}/$homie`)
         publish(`${mqttPrefix}/$homie`, 'v4.0.0')
         publish(`${mqttPrefix}/$name`, 'nodejs-poolController')
-        var nodes = 'air,pool,spa,heater'
         for (var i = 1; i <= 20; ++i) {
             nodes += `,circuit${i}`
         }
@@ -96,6 +97,7 @@ module.exports = function(container) {
         client.subscribe(`${mqttPrefix}/pool/setpoint/set`)
 
 
+
         publish(`${mqttPrefix}/spa/$name`, 'Pool')
         publish(`${mqttPrefix}/spa/$type`, 'c')
         publish(`${mqttPrefix}/spa/$properties`, 'temperature,setpoint')
@@ -117,6 +119,7 @@ module.exports = function(container) {
 
         publish(`${mqttPrefix}/heater/active/$name`, 'Heater Active')
         publish(`${mqttPrefix}/heater/active/$datatype`, 'boolean')
+
 
 
         for (i = 1; i <= 20; i++) {
@@ -208,6 +211,30 @@ module.exports = function(container) {
         }
         publish(`${mqttPrefix}/heater/active`, String(data.temperature.heaterActive === 1))
     })
+
+    socket.on('chlorinator', function(data) {
+        console.log('mqttHomie: Chlorinator info as follows: %s', JSON.stringify(data))
+        if (!data.chlorinator.installed) {
+          return;
+        }
+
+        if (!gotChlorinator && data.chlorinator.installed) {
+            gotChlorinator = true
+            publish(`${mqttPrefix}/chlorinator/$name`, 'Chlorinator')
+            publish(`${mqttPrefix}/chlorinator/$type`, data.chlorinator.name)
+            publish(`${mqttPrefix}/chlorinator/$properties`, 'salt')
+
+            publish(`${mqttPrefix}/chlorinator/salt/$name`, 'Salt Level')
+            publish(`${mqttPrefix}/chlorinator/salt/$datatype`, 'integer')
+            publish(`${mqttPrefix}/chlorinator/salt/$unit`, 'ppm')
+
+            nodes += ',chlorinator'
+            publish(`${mqttPrefix}/$nodes`, nodes)
+        }
+
+
+        publish(`${mqttPrefix}/chlorinator/salt`, String(data.chlorinator.saltPPM))
+    })+
 
     //The 'error' function fires if there is an error connecting to the socket
     socket.on('error', function(err) {
