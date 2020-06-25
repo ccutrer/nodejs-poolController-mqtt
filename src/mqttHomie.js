@@ -41,6 +41,7 @@ module.exports = function(container) {
     var gotCircuits = false
     var gotTemp = false
     var gotChlorinator = false
+    var gotIntellichem = false
     var ready = false
 
     var mqttPrefix = configFile.mqttHomie.mqttPrefix
@@ -222,19 +223,71 @@ module.exports = function(container) {
             gotChlorinator = true
             publish(`${mqttPrefix}/chlorinator/$name`, 'Chlorinator')
             publish(`${mqttPrefix}/chlorinator/$type`, data.chlorinator.name)
-            publish(`${mqttPrefix}/chlorinator/$properties`, 'salt')
+            publish(`${mqttPrefix}/chlorinator/$properties`, 'salt,output,superchlorinate')
 
             publish(`${mqttPrefix}/chlorinator/salt/$name`, 'Salt Level')
             publish(`${mqttPrefix}/chlorinator/salt/$datatype`, 'integer')
             publish(`${mqttPrefix}/chlorinator/salt/$unit`, 'ppm')
 
+            publish(`${mqttPrefix}/chlorinator/output/$name`, 'Current Output')
+            publish(`${mqttPrefix}/chlorinator/output/$datatype`, 'integer')
+            publish(`${mqttPrefix}/chlorinator/output/$unit`, '%')
+            publish(`${mqttPrefix}/chlorinator/output/$format`, '0:100')
+
+            publish(`${mqttPrefix}/chlorinator/superchlorinate/$name`, 'Super Chlorinator Status')
+            publish(`${mqttPrefix}/chlorinator/superchlorinate/$datatype`, 'boolean')
+
             nodes += ',chlorinator'
             publish(`${mqttPrefix}/$nodes`, nodes)
         }
 
-
         publish(`${mqttPrefix}/chlorinator/salt`, String(data.chlorinator.saltPPM))
-    })+
+        publish(`${mqttPrefix}/chlorinator/output`, String(data.chlorinator.currentOutput))
+        publish(`${mqttPrefix}/chlorinator/superchlorinate`, String(data.chlorinator.superChlorinate === 1))
+
+    })
+
+    socket.on('intellichem', function(data) {
+        console.log('mqttHomie: intellichem info as follows; %s', JSON.stringify(data))
+        if (!gotIntellichem) {
+          gotIntellichem = true;
+
+            publish(`${mqttPrefix}/intellichem/$name`, 'IntelliChem')
+            publish(`${mqttPrefix}/intellichem/$properties`, 'ph,orp,cya,ch,ta,tank1level,tank2level')
+
+            publish(`${mqttPrefix}/intellichem/ph/$name`, 'pH Level')
+            publish(`${mqttPrefix}/intellichem/ph/$datatype`, 'float')
+
+            publish(`${mqttPrefix}/intellichem/orp/$name`, 'ORP')
+            publish(`${mqttPrefix}/intellichem/orp/$datatype`, 'integer')
+
+            publish(`${mqttPrefix}/intellichem/cya/$name`, 'Cyanuric Acid Level (Setting)')
+            publish(`${mqttPrefix}/intellichem/cya/$datatype`, 'integer')
+
+            publish(`${mqttPrefix}/intellichem/ch/$name`, 'Calcium Hardness (Setting)')
+            publish(`${mqttPrefix}/intellichem/ch/$datatype`, 'integer')
+
+            publish(`${mqttPrefix}/intellichem/ta/$name`, 'Total Alkalinity (Setting)')
+            publish(`${mqttPrefix}/intellichem/ta/$datatype`, 'integer')
+
+            publish(`${mqttPrefix}/intellichem/tank1level/$name`, 'Tank 1 Level')
+            publish(`${mqttPrefix}/intellichem/tank1level/$datatype`, 'integer')
+
+            publish(`${mqttPrefix}/intellichem/tank2level/$name`, 'Tank 2 Level')
+            publish(`${mqttPrefix}/intellichem/tank2level/$datatype`, 'integer')
+
+            nodes += ',intellichem'
+            publish(`${mqttPrefix}/$nodes`, nodes)
+        }
+
+        publish(`${mqttPrefix}/intellichem/ph`, String(data.intellichem.readings.PH))
+        publish(`${mqttPrefix}/intellichem/orp`, String(data.intellichem.readings.ORP))
+        publish(`${mqttPrefix}/intellichem/cya`, String(data.intellichem.settings.CYA))
+        publish(`${mqttPrefix}/intellichem/ch`, String(data.intellichem.settings.CALCIUMHARDNESS))
+        publish(`${mqttPrefix}/intellichem/ta`, String(data.intellichem.settings.TOTALALKALINITY))
+        publish(`${mqttPrefix}/intellichem/tank1level`, String(data.intellichem.tankLevels['1']))
+        publish(`${mqttPrefix}/intellichem/tank2level`, String(data.intellichem.tankLevels['2']))
+    })
 
     //The 'error' function fires if there is an error connecting to the socket
     socket.on('error', function(err) {
